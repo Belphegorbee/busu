@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUSU App</title>
+
+<style>
+:root {
+  --primary: #2e7d32;
+  --bg: #f4f6f8;
+  --card: #ffffff;
+}
+
+/* FIX UTAMA */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+}
+
+header {
+  background: var(--primary);
+  color: white;
+  padding: 15px;
+  text-align: center;
+  font-weight: bold;
+}
+
+main {
+  padding: 15px;
+  max-width: 500px;
+  margin: auto;
+}
+
+/* CARD */
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* FORM */
+input, select, button {
+  width: 100%;
+  max-width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  display: block;
+  font-size: 14px;
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ROW BUTTON */
+.row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.row button {
+  flex: 1 1 30%;
+  min-width: 80px;
+  background: #ddd;
+  color: black;
+}
+
+.active {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+.hidden {
+  display: none;
+}
+
+/* LOADING */
+#loading {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.5);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  color:white;
+  font-size:18px;
+  z-index:999;
+}
+
+/* TOAST */
+#toast {
+  position: fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#2e7d32;
+  color:white;
+  padding:12px 20px;
+  border-radius:10px;
+  display:none;
+  z-index:1000;
+  font-size:14px;
+}
+
+/* MOBILE FIX */
+@media (max-width: 400px) {
+  .row button {
+    flex: 1 1 100%;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>BUSU</header>
+
+<main>
+
+  <div class="card">
+    <label>Tanggal</label>
+    <input type="date" id="tanggal">
+  </div>
+
+  <div class="card">
+    <label>Jenis Transaksi</label>
+    <div class="row">
+      <button id="btnMasuk" onclick="setJenis('MASUK')">MASUK</button>
+      <button id="btnUtang" onclick="setJenis('UTANG')">UTANG</button>
+      <button id="btnGajih" onclick="setJenis('GAJIH')">GAJIH</button>
+    </div>
+  </div>
+
+  <div class="card" id="kategoriBox">
+    <label>Kategori</label>
+    <select id="kategori">
+      <option value="">-- Pilih --</option>
+      <option>AMANG UDIN</option>
+      <option>KK AMAN</option>
+      <option>AMAT CESTING</option>
+      <option>J1</option>
+      <option>J2</option>
+      <option>J3</option>
+      <option>J4</option>
+    </select>
+  </div>
+
+  <div class="card">
+    <label>Jumlah</label>
+    <input type="number" id="jumlah">
+  </div>
+
+  <div class="card">
+    <label>Catatan</label>
+    <input type="text" id="catatan">
+  </div>
+
+  <div class="card">
+    <button onclick="kirim()">SIMPAN</button>
+  </div>
+
+</main>
+
+<!-- LOADING -->
+<div id="loading">Menyimpan...</div>
+
+<!-- TOAST -->
+<div id="toast">✔ Berhasil disimpan</div>
+
+<script>
+const URL = "https://script.google.com/macros/s/AKfycbx8VuQ6Ix93I3ipPbecxw2yO8YaFlwIBAdlyzQ3Y4i_9xYIB7qiufusezYZdbm53k2a/exec";
+
+let jenis = "";
+let isLoading = false;
+
+// default tanggal
+document.getElementById("tanggal").valueAsDate = new Date();
+
+function resetButton() {
+  document.getElementById("btnMasuk").classList.remove("active");
+  document.getElementById("btnUtang").classList.remove("active");
+  document.getElementById("btnGajih").classList.remove("active");
+}
+
+function setJenis(j) {
+  jenis = j;
+  resetButton();
+
+  if (j === "MASUK") {
+    document.getElementById("btnMasuk").classList.add("active");
+    document.getElementById("kategoriBox").classList.add("hidden");
+  } else if (j === "UTANG") {
+    document.getElementById("btnUtang").classList.add("active");
+    document.getElementById("kategoriBox").classList.remove("hidden");
+  } else if (j === "GAJIH") {
+    document.getElementById("btnGajih").classList.add("active");
+    document.getElementById("kategoriBox").classList.remove("hidden");
+  }
+}
+
+function showLoading(state) {
+  document.getElementById("loading").style.display = state ? "flex" : "none";
+}
+
+function showToast(msg, success = true) {
+  const el = document.getElementById("toast");
+  el.innerText = msg;
+  el.style.background = success ? "#2e7d32" : "#333";
+  el.style.display = "block";
+
+  setTimeout(() => {
+    el.style.display = "none";
+  }, 2000);
+}
+
+async function kirim() {
+  if (isLoading) return;
+
+  const tanggal = document.getElementById("tanggal").value;
+  const kategori = document.getElementById("kategori").value;
+  const jumlah = document.getElementById("jumlah").value;
+  const catatan = document.getElementById("catatan").value;
+
+  // VALIDASI
+  if (!jenis) return showToast("Pilih jenis transaksi", false);
+  if (!tanggal) return showToast("Tanggal wajib", false);
+  if (!jumlah || jumlah <= 0) return showToast("Jumlah tidak valid", false);
+  if (jenis !== "MASUK" && !kategori) return showToast("Kategori wajib", false);
+
+  const data = {
+    tanggal,
+    jenis,
+    kategori,
+    jumlah,
+    catatan
+  };
+
+  try {
+    isLoading = true;
+    showLoading(true);
+
+    const res = await fetch(URL, {
+      method: "POST",
+      body: JSON.stringify(data)
+    });
+
+    await res.json();
+
+    showLoading(false);
+    showToast("✔ Berhasil disimpan", true);
+
+    document.getElementById("jumlah").value = "";
+    document.getElementById("catatan").value = "";
+
+  } catch (err) {
+    showLoading(false);
+    showToast("Gagal koneksi", false);
+  } finally {
+    isLoading = false;
+  }
+}
+</script>
+
+</body>
+</html>
